@@ -6,6 +6,7 @@ import static org.junit.Assert.*;
 public class BenderTest {
     @Test
     public void test01() {
+
         String mapa = "" +
                 "#######\n" +
                 "# X   #\n" +
@@ -221,6 +222,7 @@ public class BenderTest {
         Bender bender = new Bender(mapa);
         assertEquals("SSSSSSEEENNNWWWWWWWEEEEEEEEEEEES", bender.run());
     }
+
 
     @Test
     public void test15() {
