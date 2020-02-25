@@ -1,264 +1,290 @@
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
-
-public class Bender {
-    int maxWidth;
-    int maxHeight;
-
-    int roboX;
-    int roboY;
-
-    int goalX;
-    int goalY;
-
-
-    char orientation = 'S';
-    char[] possOrien = new char[]{'S', 'E', 'N', 'W'};
-
-    boolean inverted = false;
-
-    String path = "";
-    Cell[][] mapStruct;
-
-    List<int[]> teleporters = new ArrayList<int[]>();
-    String turns = " ";
-
-
+class Bender {
     public static void main(String[] args) {
+        double angle1 = Math.toDegrees(Math.atan2((-1 - 0), (-1 - 0)));
+        angle1 = angle1 * -1;
+        System.out.println(angle1);
+    }
+
+
+    Cell start;
+    Cell goal;
+    Cell current;
+    Cell[][] map;
+
+    boolean invert = false;
+    char[] directions = new char[]{
+            'S',
+            'E',
+            'N',
+            'W'
+    };
+    char direction = directions[0];
+    String path = "";
+    String directionalPath = "S";
+
+    List<Cell> teleporters = new ArrayList<Cell>();
+
+    public Bender(String mapa) {
+        String[] split = mapa.split("\n");
+
+        int max = 0;
+        for (int i = 0; i < split.length; i++) {
+            if (split[i].length() > max) {
+                max = split[i].length();
+            }
+        }
+
+        map = new Cell[split.length][max];
+
+        for (int i = 0; i < split.length; i++) {
+            for (int j = 0; j < split[i].length(); j++) {
+
+                map[i][j] = new Cell(split[i].charAt(j), i, j);
+
+                if (map[i][j].type == "start") {
+                    start = map[i][j];
+                }
+
+                if (map[i][j].type == "goal") {
+                    goal = map[i][j];
+                }
+                if (map[i][j].type == "teleport") {
+                    teleporters.add(map[i][j]);
+                }
+
+            }
+        }
 
     }
 
-    Bender(String map) {
+    public String run() {
+        current = start;
+        while (current != goal) {
+            if (!checkWall()) {
+                move();
 
-        //Check the dimensions of the map
-        int counter = 0;
-        int finalCounter = 0;
-        for (int i = 0; i < map.length(); i++) {
-            if (map.charAt(i) == '\n') {
-                counter = 0;
-                maxHeight++;
+                if (current.type.equals("teleport")) {
+                    teleport();
+                }
+                if (current.type.equals("invert")) {
+                    invert();
+                }
+
+
             } else {
-                counter++;
-            }
-            if (counter > finalCounter) {
-                finalCounter++;
-            }
-
-
-        }
-        maxWidth = finalCounter;
-        maxHeight++;
-
-        mapStruct = new Cell[maxHeight][maxWidth];
-        String[] mapTMP = map.split("\n");
-
-        for (int i = 0; i < mapTMP.length; i++) {
-            for (int j = 0; j < mapTMP[i].length(); j++) {
-                char currentCell = mapTMP[i].charAt(j);
-                Cell tmpCell = new Cell("");
-                switch (currentCell) {
-                    case ' ':
-                        tmpCell = new Cell("void");
-                        break;
-                    case '#':
-                        tmpCell = new Cell("wall");
-
-                        break;
-                    case 'X':
-                        this.roboX = i;
-                        this.roboY = j;
-                        tmpCell = new Cell("start");
-
-                        break;
-                    case '$':
-                        this.goalX = i;
-                        this.goalY = j;
-                        tmpCell = new Cell("goal");
-
-                        break;
-                    case 'T':
-                        teleporters.add(new int[]{i, j});
-                        tmpCell = new Cell("teleport");
-
-                        break;
-                    case 'I':
-                        tmpCell = new Cell("invert");
-                }
-                mapStruct[i][j] = tmpCell;
-
-                counter++;
-            }
-
-        }
-    }
-
-    String run() {
-        while (!getCell().equals("goal")) {
-            mapStruct[roboX][roboY].visit();
-            if (getCell().equals("teleport")) {
-                teleport();
+                turn();
 
             }
-
-            if (getCell().equals("invert")) {
-                invert();
+            if (infinite()) {
+                return null;
             }
 
-            if (!lookForward().equals("wall")) {
-                this.move();
-                path += orientation;
-            } else {
-                for (char c : possOrien) {
-                    orientation = c;
-                    if (!lookForward().equals("wall")) break;
-                }
 
-                if (checkInfinite()) {
-                    return null;
-                }
-
-            }
         }
         return path;
     }
 
-    public String getCell() {
-        return this.mapStruct[roboX][roboY].getType();
+    public void turn() {
+        for (int i = 0; i < directions.length; i++) {
+            if (!checkWall()) {
+                break;
+            }
+            direction = directions[i];
+        }
     }
 
     public void move() {
-        switch (orientation) {
+        int x = current.xPosition;
+        int y = current.yPosition;
+
+        switch (this.direction) {
             case 'S':
-                this.roboX++;
-                break;
-            case 'N':
-                this.roboX--;
+                current = map[x + 1][y];
                 break;
             case 'E':
-                this.roboY++;
+                current = map[x][y + 1];
                 break;
-            case 'W':
-                this.roboY--;
-                break;
-        }
-
-
-    }
-
-    public String lookForward() {
-        switch (orientation) {
-            case 'S':
-                return this.mapStruct[roboX + 1][roboY].getType();
             case 'N':
-                return this.mapStruct[roboX - 1][roboY].getType();
-            case 'E':
-                return this.mapStruct[roboX][roboY + 1].getType();
+                current = map[x - 1][y];
+                break;
             case 'W':
-                return this.mapStruct[roboX][roboY - 1].getType();
+                current = map[x][y - 1];
+                break;
         }
-        return null;
-    }
-
-    public void teleport() {
-        int currentTele = 0;
-        int currX;
-        int currY;
-        int closestX = -111111111;
-        int closestY = -111111111;
-
-
-        for (int i = 0; i < teleporters.size(); i++) {
-            if (teleporters.get(i)[0] == roboX && teleporters.get(i)[1] == roboY) {
-                currentTele = i;
-            }
-        }
-
-        for (int i = 0; i < teleporters.size(); i++) {
-            if (i != currentTele) {
-                currX = teleporters.get(i)[0];
-                currY = teleporters.get(i)[1];
-                if (Math.abs(roboX - currX) + Math.abs(roboY - currY) < Math.abs(roboX - closestX) + Math.abs(roboX - closestY)) {
-                    closestX = currX;
-                    closestY = currY;
-                }
-
-            }
-        }
-
-        roboX = closestX;
-        roboY = closestY;
-
-    }
-
-    public void invert() {
-        if (!inverted) {
-            mapStruct[roboX][roboY].setType("void");
-            possOrien = new char[]{'N', 'W', 'S', 'E'};
-            inverted = true;
-        } else {
-            mapStruct[roboX][roboY].setType("void");
-
-            possOrien = new char[]{'S', 'E', 'N', 'W'};
-            inverted = false;
-        }
-    }
-
-    public boolean checkInfinite() {
-        if (turns.charAt(turns.length() - 1) != orientation) {
-            turns += orientation;
-
-        }
+        path += this.direction;
         try {
-            return turns.substring(turns.length() - 4, turns.length() - 1).equals("NSN");
-        } catch (Exception e) {
+            if (directionalPath.charAt(directionalPath.length() - 1) != direction) {
+                directionalPath += direction;
+            }
+        } catch (Exception ignore) {
+
+        }
+    }
+
+    public boolean checkWall() {
+        int x = current.xPosition;
+        int y = current.yPosition;
+        Cell objetivo = new Cell();
+
+        try {
+
+
+            switch (this.direction) {
+                case 'S':
+                    objetivo = map[x + 1][y];
+                    break;
+                case 'E':
+                    objetivo = map[x][y + 1];
+                    break;
+                case 'N':
+                    objetivo = map[x - 1][y];
+                    break;
+                case 'W':
+                    objetivo = map[x][y - 1];
+                    break;
+
+            }
+        } catch (Exception ignore) {
+
+        }
+        if (objetivo.type.equals("wall")) {
+            return true;
+        } else {
             return false;
         }
 
 
     }
 
-
-    char prefDir;
-    int[] currGoal = new int[2];
-
-    public String bestRun() {
-        while (!getCell().equals("goal")){
-            currGoal[0] = goalX;
-            currGoal[1] = goalY;
-
-            calcPath();
-            if (!lookForward().equals("wall")){
-                move();
-                path += orientation;
+    public void teleport() {
+        Cell tmpStrg = current;
+        for (int i = 0; i < teleporters.size(); i++) {
+            if (teleporters.get(i) == tmpStrg) {
+                teleporters.remove(i);
             }
         }
 
-        return path;
+        Cell baseCell = teleporters.get(0);
+        int base = (Math.abs(teleporters.get(0).xPosition - current.xPosition)) + (Math.abs(teleporters.get(0).yPosition - current.yPosition));
+        int idx = 0;
+        for (int c = 1; c < teleporters.size(); c++) {
+            int tmpBase = (Math.abs(teleporters.get(c).xPosition - current.xPosition)) + (Math.abs(teleporters.get(c).yPosition - current.yPosition));
+            if (tmpBase < base) {
+                idx = c;
+                base = tmpBase;
+                baseCell = teleporters.get(0);
+            } else if (tmpBase == base) {
+                tmpStrg = tmpStrg;
+                if (checkClockwise(tmpStrg, baseCell, teleporters.get(c))) {
+                    idx = c;
+                    baseCell = teleporters.get(c);
+                }
+            }
+        }
+        current = teleporters.get(idx);
+        teleporters.add(tmpStrg);
+
+
     }
 
-    public void calcPath(){
-        int xGoal = roboX - currGoal[0];
-        int yGoal = roboY - currGoal[1];
-
-        if (xGoal > yGoal){
-            if (xGoal > 0){
-                orientation = 'S';
-            } else {
-                orientation = 'N';
-
-            }
+    public boolean checkClockwise(Cell reference, Cell cell1, Cell cell2) {
+        double angle1 = Math.toDegrees(Math.atan2((cell1.yPosition - reference.yPosition), (cell1.xPosition - reference.xPosition)));
+        angle1 -= 135;
+        double angle2 = Math.toDegrees(Math.atan2((cell2.yPosition - reference.yPosition), (cell2.xPosition - reference.xPosition)));
+        angle2 -= 135;
+        if (Math.abs(angle1) > Math.abs(angle2)) {
+            return true;
         } else {
-            if (yGoal > 0){
-                orientation = 'E';
+            return false;
+        }
+    }
 
-            } else {
-                orientation = 'W';
+    public void invert() {
+        if (!invert) {
+            directions = new char[]{
+                    'N',
+                    'W',
+                    'S',
+                    'E'
+            };
+            invert = true;
+        } else {
+            directions = new char[]{
+                    'S',
+                    'E',
+                    'N',
+                    'W'
+            };
+            invert = false;
+        }
+    }
 
+    public boolean infinite() {
+        String findStr = "SNS";
+        int lastIndex = 0;
+        int count = 0;
+
+        while (lastIndex != -1) {
+
+            lastIndex = directionalPath.indexOf(findStr, lastIndex);
+
+            if (lastIndex != -1) {
+                count++;
+                lastIndex += findStr.length();
             }
         }
+        if (count > 50) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public int bestRun() {
+        return 1;
+    }
+}
+
+class Cell {
+    String type;
+    int xPosition;
+    int yPosition;
+
+
+    public Cell() {
+
+    }
+
+    public Cell(char type, int x, int y) {
+        String tmpStr = "";
+        switch (type) {
+            case '#':
+                tmpStr = "wall";
+                break;
+            case 'X':
+                tmpStr = "start";
+                break;
+            case '$':
+                tmpStr = "goal";
+                break;
+            case 'T':
+                tmpStr = "teleport";
+                break;
+            case 'I':
+                tmpStr = "invert";
+                break;
+            default:
+                tmpStr = "void";
+                break;
+        }
+        this.type = tmpStr;
+
+        this.xPosition = x;
+        this.yPosition = y;
+
 
     }
 
