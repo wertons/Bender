@@ -11,7 +11,7 @@ public class BenderTest2 {
         String mapa;
         Bender bender;
 
-/*
+
         mapa = "" +
                 "#######\n" +
                 "# X   #\n" +
@@ -75,6 +75,7 @@ public class BenderTest2 {
                 "#   #        #\n" +
                 "##############";
         bender = new Bender(mapa);
+
         assertEquals(39, bender.bestRun());
 
 
@@ -125,7 +126,7 @@ public class BenderTest2 {
                 "###############";
         bender = new Bender(mapa);
         assertEquals(51, bender.bestRun());
-*/
+
         // Amb Teleport
         mapa = "" +
                 "#######\n" +
