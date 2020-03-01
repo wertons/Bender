@@ -25,7 +25,6 @@ Which have to be inserted into the Bender constructor as a single line string. T
 <li>'#': The hash is used to represent a wall, a inpassable cell.</li>
 <li>'T': The letter T is used to represent a teleporter cell, which on entry teleports to the closest teleport(other than himself).</li>
 <li>'I': The letter I used to represent a inverter, the inverter changes the default direction priorities.</li>
-
-
-
 </ul>
+
+[Here you can find a more in-depth explanation](./Documentation/Project_3-Bender-Pau_Bestard.pdf)
