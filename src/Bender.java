@@ -57,7 +57,11 @@ class Bender {
 
     }
 
+    //Here starts the brute force method
     public String run() {
+        if (!testMap()) {
+            return null;
+        }
         //Establish the current cell at the starting point
         current = start;
         //Check if we are at the goal, if not...
@@ -88,6 +92,18 @@ class Bender {
         }
         //Return the path to the goal
         return path;
+    }
+
+    public boolean testMap() {
+        //This function checks some basic map requirements like having a goal
+        if (teleList.size() == 1) {
+            return false;
+        }
+        if (start == null) {
+            return false;
+
+        }
+        return goal != null;
     }
 
     public void turn() {
@@ -242,6 +258,7 @@ class Bender {
         return current.visits >= 8;
     }
 
+    //Here starts the shortest path calculator
     public int bestRun() {
         //We set the heuristic of each cell
         setHeuristic();
